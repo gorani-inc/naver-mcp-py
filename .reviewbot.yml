@@ -80,12 +80,15 @@ review:
     - "**/*.graphql.swift"
 
     # ── 에이전트·편집기·OS 부산물 ──
-    - "**/.claude/**"
+    # .claude·.vscode·.idea 는 폴더째 빼지 않는다(hooks·tasks·실행 설정은 명령을 실행하므로 리뷰). 개인 파일만 뺀다.
+    - "**/.claude/settings.local.json"
+    - "**/.claude/worktrees/**"
     - "**/.codex/**"
     - "**/.gemini/**"
     - "**/.gstack/**"
-    - "**/.vscode/**"
-    - "**/.idea/**"
+    - "**/.idea/workspace.xml"
+    - "**/.idea/shelf/**"
+    - "**/.idea/usage.statistics.xml"
     - "**/*.swp"
     - "**/.DS_Store"
     - "**/._*"
