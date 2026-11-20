@@ -41,6 +41,9 @@ review:
     - "**/.netrc"
     - "**/.env"
     - "**/.env.*"
+    # 이름 끝이 .env 인 환경 파일(prod.env·naver-mcp.env)과 direnv 파일.
+    - "**/*.env"
+    - "**/.envrc"
 
     # ── Firebase·Google 로그인 설정 — API 키·클라이언트 ID 만 있고 리뷰할 로직이 없다 ──
     - "**/GoogleService-Info.plist"
@@ -132,7 +135,9 @@ review:
     - "**/.mypy_cache/**"
     - "**/.ruff_cache/**"
     - "**/*.egg-info/**"
-    - "dist/**"
+    - "**/dist/**"
+    # PyPI 업로드 토큰.
+    - "**/.pypirc"
 
   # exclude 보다 먼저 적용된다. 좁게 적는다 — 넓게 적으면 비밀 재료 규칙을 덮는다.
   always_review:
