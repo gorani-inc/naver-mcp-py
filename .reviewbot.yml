@@ -84,7 +84,27 @@ review:
     - "**/.claude/settings.local.json"
     - "**/.claude/worktrees/**"
     - "**/.codex/**"
-    - "**/.gemini/**"
+    # 개인 상태와 인증 파일은 제외하고 공유 훅에는 일반 비밀 파일 규칙을 적용합니다.
+    - "*/**/.gemini/**"
+    - "**/.gemini/*"
+    - "**/.gemini/**/.*"
+    - "**/.gemini/**/.*/**"
+    - "**/.gemini/tmp/**"
+    - "**/.gemini/history/**"
+    - "**/.gemini/sessions/**"
+    - "**/.gemini/cache/**"
+    - "**/.gemini/telemetry/**"
+    - "**/.gemini/logs/**"
+    - "**/.gemini/credentials/**"
+    - "**/.gemini/accounts/**"
+    - "**/.gemini/antigravity/**"
+    - "**/.gemini/antigravity-browser-profile/**"
+    - "**/.gemini/extensions/**"
+    - "**/.gemini/**/oauth_creds.json"
+    - "**/.gemini/**/mcp-oauth-tokens.json"
+    - "**/.gemini/**/google_accounts.json"
+    - "**/.gemini/**/auth.json"
+    - "**/.gemini/**/credentials.json"
     - "**/.gstack/**"
     - "**/.idea/workspace.xml"
     - "**/.idea/shelf/**"
@@ -145,9 +165,6 @@ review:
   # exclude 보다 먼저 적용된다. 좁게 적는다 — 넓게 적으면 비밀 재료 규칙을 덮는다.
   always_review:
     - ".gemini/settings.json"
-    - ".gemini/hooks/[!.]*.sh"
-    - ".gemini/hooks/[!.]*.py"
-    - ".gemini/hooks/[!.]*.js"
     # 봇은 이 파일을 PR 의 head 에서 읽고, PR 이 이 파일을 바꾸면 base 의 정책도 함께 적용한다. PR 이 리뷰 범위를 바꾸는 것을 리뷰가 보게 한다.
     - ".reviewbot.yml"
     # 비밀 재료를 커밋 단계에서 막는 곳이다. 무시 규칙을 바꾸는 PR 을 리뷰가 보게 한다.
