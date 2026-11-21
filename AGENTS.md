@@ -77,7 +77,7 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
 4. Inspect the current file tree and tests.
 5. Implement the smallest vertical slice first.
 
-<!-- gorani-common:start v21 public — 조직 공통 원본의 공개 저장소용 판입니다. 여기만 고치지 말고 원본을 고쳐 함께 반영합니다. -->
+<!-- gorani-common:start v22 public — 조직 공통 원본의 공개 저장소용 판입니다. 여기만 고치지 말고 원본을 고쳐 함께 반영합니다. -->
 ## 공통 작업 규칙 (gorani-inc)
 
 이 절은 gorani-inc 의 모든 저장소에 같은 내용으로 들어 있습니다. 이 절 밖에 적힌 이 저장소만의 규칙이 있으면, 놓인 위치와 관계없이 그쪽이 우선합니다. 아래 4번의 머지 조건과 5번의 브랜치 갱신·삭제 조건은 항상 함께 지킵니다.
@@ -105,7 +105,11 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
      없을 때만 등록 결과를 추적합니다. 새 검토가 필요하거나 기록이 없으면 대기열에서
      제거하고 PR이 열린 채 자동 머지와 대기열이 모두 해제됐는지 확인한 뒤 검토합니다.
    - 머지를 보류하거나 PR을 수정·이동하기 전에 자동 머지를 끄고 대기열에서도 제거합니다.
-     스택 비동기 병합 요청 기록이 있으면 먼저 결과를 조회합니다. 응답 유실로 UUID가
+     스택에서 수정·이동할 PR은 상위·하위 PR을 포함한 관련 요청의 공유 기록을 먼저
+     대조합니다. 모든 요청 주체가 요청 전 대상 PR 목록과 의도를 기록하고 접수 UUID와
+     종료 결과를 갱신해야 합니다. 진행 중인 관련 요청이 없고 작업이 끝날 때까지 새 요청을
+     막을 수 있을 때만 수정·이동합니다. 기록이 불완전하면 보류합니다.
+     비동기 병합 요청 기록이 있으면 먼저 결과를 조회합니다. 응답 유실로 UUID가
      없으면 요청 결과가 미확정입니다. 종료를 입증할 때까지 PR 수정·이동·재요청을
      보류하고 운영자에게 인계합니다. UUID로 조회한 결과가 pending이거나
      결과가 불명확하면 PR 수정·이동·재요청을 보류합니다. 요청이 종료된 뒤 실제 병합 또는
@@ -149,7 +153,9 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
 5. GitHub 스택 또는 선행 PR(A)의 브랜치를 대상으로 하는 후속 PR(B)은 아래 절차를 따릅니다.
    - GitHub가 관리하는 스택은 최하단의 검토된 PR 하나를 대상으로 스택 병합 절차를 사용합니다.
      직접 병합·대기열 등록 요청 전 스택에서 자동 재배치될 브랜치를 확인합니다. 각 브랜치를
-     소스 또는 대상으로 사용하는 스택 밖 열린 PR을 조회하고 기존 head·대상·분기점을
+     소스 또는 대상으로 쓰는 PR의 생성·대상 변경·소스 갱신과 스택 구성 변경을 최초
+     조회부터 자동 재배치 완료까지 다른 작업자와 직렬화합니다. 보장할 수 없으면
+     병합·대기열 등록을 보류합니다. 스택 밖 열린 PR을 조회하고 기존 head·대상·분기점을
      기록합니다. 조회가 불완전하거나 고유 변경을 보존할 방법이 정해지지 않으면 보류합니다.
      영향받는 PR의 병합은 재배치 후 새 대상 기준 직접 검토와 필수 CI가 끝날 때까지
      차단합니다. 마지막 PR만 남아도 같은 절차를 사용합니다. 요청 전에 검토한 head와 요청 의도를
@@ -162,7 +168,8 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
      최종 결과를 확인하면 UUID와 함께 기록합니다. 조회가 만료되면 기록과 현재 PR·대기열·
      대상 이력에서 종료와 병합 여부를 확인합니다. 열린 상태나 404만으로 실패를 추정하지
      않습니다. 종료를 입증할 수 없으면 운영자에게 인계하고 재요청·PR 변경을 보류합니다. 서버의 자동 재배치가
-     끝나면 다음 PR의 새 대상·head에서 4번을 다시 수행합니다. 수동 대상 변경·재배치를
+     끝나면 스택과 연결된 열린 PR을 다시 조회해 기록과 대조합니다. 달라진 PR은 병합을
+     보류하고 변경 범위를 확인합니다. 다음 PR의 새 대상·head에서 4번을 다시 수행합니다. 수동 대상 변경·재배치를
      겹쳐 실행하지 않습니다. 스택 여부나 검토한 SHA의 병합을 보장할 수 없으면 중단합니다.
    - 아래 수동 절차는 GitHub 스택에 등록하지 않고 브랜치만 연결한 PR에 적용합니다.
    - A의 head 저장소를 명시해 그 브랜치를 대상으로 하는 열린 PR을 전부 조회합니다.
@@ -174,6 +181,8 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
      조상 검사 전 관련 커밋을 가져오고 전체 이력이 있는지 확인합니다. 얕은 복제본은
      git fetch --unshallow 후 git rev-parse --is-shallow-repository가 false인지
      확인합니다. 전체 이력을 확보하지 못하면 중단합니다.
+     B의 head 저장소와 새 대상 저장소가 다르면 이동 전에 멈춥니다. 포크 B의
+     대상 변경·자동 갱신과 A의 병합을 보류하고 작업자와 처리 방법을 정합니다.
      B의 head가 기본 브랜치이거나 push로 운영 배포·재기동을 유발하는 브랜치인지
      이동 전과 push 직전에 확인합니다. 해당하면 별도 작업 브랜치로 옮겨 다시 검토할
      때까지 자동 이동·갱신을 보류합니다. 확인에 실패해도 중단합니다.
@@ -214,7 +223,9 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
      일치할 때만 자동 갱신합니다. 위의 저장소·조상·간접 병합 검사와 B의
      동시 변경 방지 조건을 확인한 뒤 B를 새 대상으로 옮겨 확인하고 아래 절차를 따릅니다.
      이동을 검증할 수 없으면 브랜치를 보존하고 중단합니다.
-     요청 전 중단·거절·미병합 제외 시 A가 열려 있고 대기열 밖이며 자동 머지가 꺼져 있을 때만
+     요청 전 중단·거절·미병합 제외 시 복구 전에 A의 직접·간접 병합과 재등록을 막고,
+     마지막 B의 복구 결과를 확인할 때까지 유지합니다. 이 통제 아래 A가 열려 있고
+     대기열 밖이며 자동 머지가 꺼져 있는지 다시 확인한 경우에만
      이번에 옮긴 B 중 열림 상태와 새 대상이 일치하는 PR을 원래 대상으로 복구합니다.
      다른 변경이 있거나 요청 결과가 불명확하면 임의로 되돌리지 말고 재조회한 결과를 알립니다.
    - A가 MERGED이고 실제 병합에 사용한 소스 SHA가 기록된 A의 검토 SHA와 같은지
@@ -249,6 +260,8 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
    - push 직전에도 B의 열림 상태·head 저장소·브랜치·SHA 및 대상 저장소·브랜치·SHA를
      검증한 값과 대조합니다. PR 대상 변경과 push를 직렬화할 수 없으면 보류합니다.
      일반·강제 push 모두 B와 같은 소스 저장소·브랜치를 쓰는 다른 열린 PR을 확인합니다.
+     각 PR의 자동 병합·대기열을 해제하고, push 후 각 대상 기준의 새 head 직접 검토와
+     필수 CI가 끝날 때까지 병합을 차단합니다. 보장할 수 없으면 push를 보류합니다.
      두 방식 모두 B 브랜치를 대상으로 하는 열린 PR을 조회합니다. 각 head가 기존 B에는
      없고 push 결과의 조상이 되는지 전체 이력에서 검사합니다. 새로 포함되는 PR의 직접
      검토와 필수 CI가 끝나기 전이거나 포함 여부를 확인할 수 없으면 중단합니다. 영향받는 PR을
@@ -261,12 +274,13 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
      일반 갱신과 승인된 재작성 모두 아래 명령으로 기대 B_SHA와 일치할 때만 올립니다.
 
      ```sh
-     git push --no-follow-tags \
+     git push --no-recurse-submodules --no-follow-tags \
        --force-with-lease="refs/heads/${b:?}:${b_sha:?}" \
        "${b_remote:?}" "${result_sha:?}:refs/heads/${b:?}"
      ```
 
-     응답 유실이나 중단 뒤에는 B의 열림 상태와 기록한 저장소·브랜치·대상을 확인합니다.
+     push 성공 응답을 받은 경우에도, 응답 유실이나 중단 뒤에도 B의 열림 상태와 기록한
+     저장소·브랜치·대상을 확인합니다.
      원격 B와 PR head가 모두 결과 SHA이면 재푸시하지 않고 새 CI와 직접 검토부터 재개합니다.
      둘 다 기존 SHA이면 현재 대상과 모든 push 전 조건을 다시 확인합니다.
      그 밖의 불일치나 동시 변경이 있으면 중단합니다. 완료한 단계는 복구 기록에 남깁니다.
@@ -281,10 +295,12 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
      원격 SHA가 달라졌거나 조회에 실패하면 보존합니다. 거절되면 기대값을 바꿔 재시도하지 않습니다.
 
      ```sh
-     git push --no-follow-tags \
+     git push --no-recurse-submodules --no-follow-tags \
        --force-with-lease="refs/heads/${a:?}:${merged_head_sha:?}" \
        "${a_remote:?}" ":refs/heads/${a:?}"
      ```
+
+     삭제 요청 후 원격 조회가 성공하고 해당 ref가 없을 때만 정리 완료로 기록합니다.
 
 6. 머지한 뒤에는 이번에 처리하지 않은 후속 제안을 PR 별로 정리해 보고합니다.
 
