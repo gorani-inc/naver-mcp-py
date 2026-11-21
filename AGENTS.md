@@ -77,7 +77,7 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
 4. Inspect the current file tree and tests.
 5. Implement the smallest vertical slice first.
 
-<!-- gorani-common:start v11 public — 조직 공통 원본의 공개 저장소용 판입니다. 여기만 고치지 말고 원본을 고쳐 함께 반영합니다. -->
+<!-- gorani-common:start v12 public — 조직 공통 원본의 공개 저장소용 판입니다. 여기만 고치지 말고 원본을 고쳐 함께 반영합니다. -->
 ## 공통 작업 규칙 (gorani-inc)
 
 이 절은 gorani-inc 의 모든 저장소에 같은 내용으로 들어 있습니다. 이 절 밖에 적힌 이 저장소만의 규칙이 있으면, 놓인 위치와 관계없이 그쪽이 우선합니다. 다만 아래 "코드리뷰 검토" 4번의 머지 조건은 저장소 규칙이 머지를 허용하더라도 함께 지킵니다.
@@ -99,6 +99,10 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
 2. **환각·오탐**은 다음 경우입니다. 이미 구현돼 있거나, 없는 코드를 짚었거나, 의도된 동작을 버그로 본 경우. 이때는 코드를 고치지 않고 그 코멘트에 답글을 답니다. 답글에는 근거(파일·라인·코드 흐름)를 적습니다. 지적이 달린 뒤의 커밋에서 이미 고쳤으면 그 커밋을 적습니다. 조용히 무시하지 않습니다.
 3. **실제 결함이나 타당한 개선**이면 코드를 고칩니다. 고친 뒤 그 코멘트에 무엇을 바꿨는지 답글을 답니다.
 4. PR마다 현재 대상 저장소·브랜치·SHA와 head SHA를 기록합니다.
+   - 검토를 시작할 때 자동 머지와 대기열 상태부터 조회합니다. 자동 머지는 해제합니다.
+     대기열 등록이 있으면 현재 대상·head와 일치하는 승인된 등록 기록을 확인합니다.
+     기록이 일치하면 등록 결과만 추적합니다. 새 검토가 필요하거나 기록이 없으면 대기열에서
+     제거하고 PR이 열린 채 자동 머지와 대기열이 모두 해제됐는지 확인한 뒤 검토합니다.
    - 머지를 보류하거나 PR을 수정·이동하기 전에 자동 머지를 끄고 대기열에서도 제거합니다.
      PR이 열려 있고 두 조건이 해제됐는지 확인합니다. 확인하거나 해제하지 못하면 중단합니다.
    - 마지막 대상 변경 뒤 최신 head와 현재 대상 브랜치 사이의 변경을 직접 검토합니다.
@@ -135,7 +139,8 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
      이번에 옮긴 B 중 열림 상태와 새 대상이 일치하는 PR을 원래 대상으로 복구합니다.
      다른 변경이 있거나 요청 결과가 불명확하면 임의로 되돌리지 말고 재조회한 결과를 알립니다.
    - A가 MERGED인지 확인한 뒤 B마다 절차를 재개합니다. diff가 비었거나 A의 변경이 비교
-     화면에 보이지 않아도 처리합니다. B가 열려 있고 head 저장소·브랜치·SHA 및 대상
+     화면에 보이지 않아도 처리합니다. 기록된 push가 있으면 아래 재개 조건부터 확인합니다.
+     B가 열려 있고 head 저장소·브랜치·SHA 및 대상
      저장소·브랜치가 기록과 같은지 확인합니다. 포크 B는 자동으로 다시 쓰지 않습니다.
      원격 fetch 주소와 유일한 push 주소가 같은 해당 저장소인지 확인하고, B와 새 대상을
      함께 fetch합니다. 원격 B와 `headRefOid`가 같은 값을 B_SHA로 고정합니다.
@@ -144,6 +149,9 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
      A의 검토 SHA가 새 대상 SHA의 조상이면 검증한 B_SHA의 임시 브랜치에 새 대상을 합칩니다.
      스쿼시·재배치 병합으로 조상이 아니면 B 고유 커밋을 새 대상 위로 옮겨야 합니다.
      `git rev-list --merges <A의 검토 SHA>..<B_SHA>`가 성공하고 출력이 비었을 때만
+     재작성 전에 B의 head 저장소에서 B 브랜치를 대상으로 하는 열린 후속 PR을 조회합니다.
+     하나라도 있거나 조회에 실패하면 재작성과 강제 push를 중단합니다. 후속 PR의 기존 분기점을
+     기록하고 의존 관계를 함께 옮길 방법을 확인합니다. 후속 PR이 없으면
      B_SHA에서 임시 브랜치를 만들어 다음 명령을 실행합니다. 고유 범위에 머지 커밋이 있으면
      자동 갱신을 중단하고 기존 충돌 해결을 보존할 범위를 사용자와 정합니다.
 
@@ -157,6 +165,8 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
      대조합니다. 삭제·되돌림까지 보존됐는지 확인할 수 없으면 중단합니다.
    - push 직전에도 B의 열림 상태·head 저장소·브랜치·SHA 및 대상 저장소·브랜치·SHA를
      검증한 값과 대조합니다. PR 대상 변경과 push를 직렬화할 수 없으면 보류합니다.
+     강제 push 직전에도 B를 대상으로 하는 열린 PR이 없는지 재확인합니다.
+     원격 갱신 요청 전에 기존 B_SHA·검증한 결과 SHA·대상·진행 단계를 복구 기록에 남깁니다.
      강제 push가 필요하면 원격 B_SHA를 lease로 지정해 검증한 결과 SHA 하나만 올립니다.
 
      ```sh
@@ -164,6 +174,10 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
        origin "$result_sha:refs/heads/$b"
      ```
 
+     응답 유실이나 중단 뒤에는 B의 열림 상태와 기록한 저장소·브랜치·대상을 확인합니다.
+     원격 B와 PR head가 모두 결과 SHA이면 재푸시하지 않고 새 CI와 직접 검토부터 재개합니다.
+     둘 다 기존 SHA이면 현재 대상과 모든 push 전 조건을 다시 확인합니다.
+     그 밖의 불일치나 동시 변경이 있으면 중단합니다. 완료한 단계는 복구 기록에 남깁니다.
      거절되면 현재 상태부터 다시 확인합니다. B는 새 대상 기준의 커밋을 push한 뒤
      (변경이 없으면 빈 커밋 사용) 필수 CI와 4번의 직접 검토를 다시 수행합니다. A가 병합되고 이 재검증이
      끝나기 전에는 B를 병합하지 않습니다. A의 브랜치는 실제 병합과 후속 PR 이동을 확인한 뒤
