@@ -77,7 +77,7 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
 4. Inspect the current file tree and tests.
 5. Implement the smallest vertical slice first.
 
-<!-- gorani-common:start v12 public — 조직 공통 원본의 공개 저장소용 판입니다. 여기만 고치지 말고 원본을 고쳐 함께 반영합니다. -->
+<!-- gorani-common:start v13 public — 조직 공통 원본의 공개 저장소용 판입니다. 여기만 고치지 말고 원본을 고쳐 함께 반영합니다. -->
 ## 공통 작업 규칙 (gorani-inc)
 
 이 절은 gorani-inc 의 모든 저장소에 같은 내용으로 들어 있습니다. 이 절 밖에 적힌 이 저장소만의 규칙이 있으면, 놓인 위치와 관계없이 그쪽이 우선합니다. 다만 아래 "코드리뷰 검토" 4번의 머지 조건은 저장소 규칙이 머지를 허용하더라도 함께 지킵니다.
@@ -120,7 +120,9 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
    - 일반 병합은 검토한 head를 지정합니다(`gh pr merge --match-head-commit`).
      필수 대기열에는 `expectedHeadOid`를 지정해 `enqueuePullRequest`로 등록합니다.
      먼저 `merge_group`의 실제 시험이 모두 실행·성공해야 필수 검사가 통과하는지 확인합니다.
-     조건부 생략을 성공으로 인정하거나 이를 확인할 수 없으면 등록을 보류합니다.
+     조건부 생략을 성공으로 인정하면 등록을 보류합니다. 각 PR이 필수 검사를 통과해야 하는
+     대기열 설정(Only merge non-failing pull requests)도 확인합니다. 실패한 PR이
+     뒤 그룹의 성공만으로 병합될 수 있거나 설정을 확인할 수 없으면 등록을 보류합니다.
      요청이 거절되거나 결과가 불명확하면 PR 상태·대기열·자동 머지를 재조회합니다.
      대기열 등록을 자동 머지로 대체하지 않습니다.
 5. 후속 PR(B)이 선행 PR(A)의 브랜치를 대상으로 하면 아래 순서를 따릅니다.
@@ -165,7 +167,10 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
      대조합니다. 삭제·되돌림까지 보존됐는지 확인할 수 없으면 중단합니다.
    - push 직전에도 B의 열림 상태·head 저장소·브랜치·SHA 및 대상 저장소·브랜치·SHA를
      검증한 값과 대조합니다. PR 대상 변경과 push를 직렬화할 수 없으면 보류합니다.
-     강제 push 직전에도 B를 대상으로 하는 열린 PR이 없는지 재확인합니다.
+     강제 push 직전에는 B 브랜치를 대상으로 하는 열린 PR과 B와 같은 소스 저장소·브랜치를
+     쓰는 다른 열린 PR을 모두 확인합니다. 조회에 실패하거나 영향받을 PR이 있으면 중단합니다.
+     조회부터 push 완료까지 해당 PR 생성·대상 변경과 브랜치 재작성을 직렬화할 수 없으면
+     자동 강제 push를 보류합니다. lease로 보호되는 것은 원격 브랜치의 커밋입니다.
      원격 갱신 요청 전에 기존 B_SHA·검증한 결과 SHA·대상·진행 단계를 복구 기록에 남깁니다.
      강제 push가 필요하면 원격 B_SHA를 lease로 지정해 검증한 결과 SHA 하나만 올립니다.
 
@@ -180,8 +185,19 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
      그 밖의 불일치나 동시 변경이 있으면 중단합니다. 완료한 단계는 복구 기록에 남깁니다.
      거절되면 현재 상태부터 다시 확인합니다. B는 새 대상 기준의 커밋을 push한 뒤
      (변경이 없으면 빈 커밋 사용) 필수 CI와 4번의 직접 검토를 다시 수행합니다. A가 병합되고 이 재검증이
-     끝나기 전에는 B를 병합하지 않습니다. A의 브랜치는 실제 병합과 후속 PR 이동을 확인한 뒤
-     정리합니다.
+     끝나기 전에는 B를 병합하지 않습니다. 브랜치는 실제 병합 후 정리합니다. 자동 삭제로
+     이미 없으면 완료입니다. 수동 삭제 전에는 병합한 head 저장소·브랜치·SHA를 확인하고,
+     그 브랜치를 사용하거나 대상으로 하는 열린 PR이 남아 있는지 다시 조회합니다.
+     같은 저장소의 확인한 원격에서, 열린 PR이 없고 새 PR 생성·대상 변경과 정리를
+     직렬화할 수 있을 때만 병합 당시 head SHA를 lease로 지정해 해당 ref만 삭제합니다.
+     원격 SHA가 달라졌거나 조회에 실패하면 보존합니다. 거절되면 기대값을 바꿔 재시도하지 않습니다.
+
+     ```sh
+     git push --no-follow-tags \
+       --force-with-lease="refs/heads/$a:$merged_head_sha" \
+       origin ":refs/heads/$a"
+     ```
+
 6. 머지한 뒤에는 이번에 처리하지 않은 후속 제안을 PR 별로 정리해 보고합니다.
 
 지킬 것:
