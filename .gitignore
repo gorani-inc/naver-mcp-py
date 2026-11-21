@@ -11,3 +11,7 @@ dist/
 *.pyc
 *.pyo
 .DS_Store
+
+# 에이전트 개인 설정·작업 트리(공유 설정 .claude/settings.json 과 hooks 는 커밋해 리뷰한다)
+**/.claude/settings.local.json
+**/.claude/worktrees/
