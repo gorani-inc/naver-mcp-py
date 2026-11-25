@@ -77,7 +77,7 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
 4. Inspect the current file tree and tests.
 5. Implement the smallest vertical slice first.
 
-<!-- gorani-common:start v33 public — 조직 공통 원본의 공개 저장소용 판입니다. 여기만 고치지 말고 원본을 고쳐 함께 반영합니다. -->
+<!-- gorani-common:start v34 public — 조직 공통 원본의 공개 저장소용 판입니다. 여기만 고치지 말고 원본을 고쳐 함께 반영합니다. -->
 ## 공통 작업 규칙 (gorani-inc)
 
 이 절은 gorani-inc 의 모든 저장소에 같은 내용으로 들어 있습니다. 이 절 밖에 적힌 이 저장소만의 규칙이 있으면, 놓인 위치와 관계없이 그쪽이 우선합니다. 아래 4번의 머지 조건과 6번의 정리 조건은 저장소 규칙이 허용하더라도 함께 지킵니다.
@@ -143,30 +143,17 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
      지정합니다(`--force-with-lease=refs/heads/<B>:<SHA>`). 거부되면 덮어쓰지 말고 원격부터 다시 확인합니다.
      저장소 규칙이 강제 push를 제한하면 그 규칙을 따릅니다.
 6. 머지한 뒤에는 **원격·로컬 브랜치와 워크트리를 정리하고** 결과를 보고합니다.
-   - 정리 대상은 머지한 작업 브랜치입니다. 기본·장기 브랜치(develop, release 등)와 포크 브랜치,
-     열린 PR이 대상이나 소스로 쓰는 브랜치, 다른 세션이 쓰고 있는 워크트리는 남깁니다.
+   - 대상은 이번에 머지한 작업 브랜치와 이 작업을 위해 만든 워크트리입니다. 기본·장기 브랜치(develop, release 등),
+     포크 브랜치, 열린 PR이 대상이나 소스로 쓰는 브랜치, 다른 세션이 쓰는 것은 남깁니다.
    - 원격 브랜치는 저장소가 자동으로 지우지 않으면, 머지한 head(`--match-head-commit`에 넘긴 SHA)를
-     가리킬 때만 지웁니다(거부되면 남깁니다).
-
-     ```sh
-     git push --force-with-lease=refs/heads/<브랜치>:<SHA> origin :refs/heads/<브랜치>
-     ```
-
-   - 워크트리는 머지한 브랜치를 체크아웃했거나 이 작업을 위해 만든 것만 봅니다. HEAD의 커밋이
-     머지한 head에 모두 들어 있고(아래 첫 명령 종료 코드 0, detached HEAD 포함), 커밋하지 않은 변경이나
-     남겨야 할 무시된 파일(`.env` 등, 빌드 산출물 제외)이 없을 때만 지웁니다
-     (`git worktree remove`, `git worktree prune`). 확인에 실패했거나 남은 것이 있으면 남기고 알립니다.
-
-     ```sh
-     git -C <워크트리> merge-base --is-ancestor HEAD <SHA>
-     git -C <워크트리> status --porcelain --ignored --untracked-files=all --ignore-submodules=none
-     ```
-
-   - 로컬 브랜치는 커밋이 머지한 head에 모두 들어 있을 때만
-     (`git merge-base --is-ancestor <로컬 브랜치> <SHA>` 종료 코드 0) `git branch -D`로 지웁니다.
-     push하지 않은 커밋이 있으면 남기고 알립니다.
+     가리킬 때만 지웁니다.
+   - 워크트리는 머지한 head에 없는 커밋(detached HEAD 포함), 커밋하지 않은 변경, 남겨야 할 무시된 파일
+     (`.env` 등, 무시된 폴더 안까지)이 없을 때만 `git worktree remove <경로>`로 지웁니다.
+   - 로컬 브랜치는 `git branch -d`로 지웁니다.
+   - 강제 옵션(`--force`, `-D`)과 저장소 전체를 훑는 정리(`git worktree prune` 등)는 쓰지 않습니다.
+     확인하지 못했거나 거부되면 남기고 알립니다.
    - 그 머지로 시작된 배포·릴리스 실행의 결과와, 후속으로 넘긴 제안·기존 문제를 PR 별로 보고합니다.
-     배포가 실패했거나 결과를 확인하지 못하면 그대로 알리고, 원인을 알 때까지 그 저장소의 다음 배포 머지를 멈춥니다.
+     배포가 실패했거나 결과를 확인하지 못했으면 그대로 알립니다.
 
 지킬 것:
 
