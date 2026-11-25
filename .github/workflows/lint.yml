@@ -1,0 +1,33 @@
+name: Lint
+
+# 조직 ruleset 이 요구하는 필수 검사 lint. 이 워크플로가 없으면 모든 PR 의 머지가 막힌다.
+# 공개 저장소라 포크 PR 의 코드도 실행되므로 GitHub 호스트 러너에서만 돌린다.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: python -m pip install --disable-pip-version-check ".[dev]" pytest "ruff==0.14.5"
+      - name: Ruff
+        run: ruff check .
+      - name: Tests
+        run: python -m pytest -q
