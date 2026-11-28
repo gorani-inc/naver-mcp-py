@@ -77,10 +77,12 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
 4. Inspect the current file tree and tests.
 5. Implement the smallest vertical slice first.
 
-<!-- gorani-common:start v38 public — 조직 공통 원본의 공개 저장소용 판입니다. 여기만 고치지 말고 원본을 고쳐 함께 반영합니다. -->
+<!-- gorani-common:start v39 public — 조직 공통 원본의 공개 저장소용 판입니다. 여기만 고치지 말고 원본을 고쳐 함께 반영합니다. -->
 ## 공통 작업 규칙 (gorani-inc)
 
 이 절은 gorani-inc 의 모든 저장소에 같은 내용으로 들어 있습니다. 이 절 밖에 적힌 이 저장소만의 규칙이 있으면, 놓인 위치와 관계없이 그쪽이 우선합니다. 아래 4번의 머지 조건과 6번의 정리 조건은 저장소 규칙이 허용하더라도 함께 지킵니다.
+저장소 규칙이 '고칠 것'·'이슈'·'changes are needed'처럼 머지를 막는 지적을 말할 때, 「코드리뷰 검토」
+2번의 머지를 막지 않는 지적은 그 안에 들지 않습니다.
 
 ### 설계: SOLID
 
@@ -103,7 +105,8 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
    원래 스레드에 수정 내용, 검증 결과, 원격에 반영한 커밋 SHA를 답글로 남깁니다.
    결함이 아닌 개선 제안과 이 PR 전부터 있던 문제는 지금 고치거나, 근거를 답하고 후속으로 넘깁니다.
    등급은 봇이 붙인 표기가 아니라 1번에서 최신 head와 대조해 판단한 실제 영향으로 정합니다.
-   라운드는 리뷰를 받은 서로 다른 head의 수입니다(봇 수와 관계없이 head마다 한 번, 첫 head가 1라운드).
+   라운드는 봇 리뷰를 받은 서로 다른 head의 수입니다(봇 수와 관계없이 head마다 한 번, 첫 head가
+   1라운드. 봇 리뷰 없이 직접 검토만 한 head는 세지 않습니다).
    다음 지적은 실제 결함이라도 머지를 막지 않습니다('실제 결함은 직접 수정'의 예외, 2026-11-28 결정).
    근거나 후속 계획을 답하고 후속으로 넘깁니다.
    - Minor·Suggestion·nit 같은 작은 지적. 개수와 라운드에 관계없습니다.
@@ -114,7 +117,8 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
 
    단, 잘못된 것이 배포·업로드·삭제되거나 데이터·보안·비밀값에 영향이 있는 결함은 위 목록에 들어도
    라운드와 관계없이 고칩니다.
-   3라운드부터는 남은 지적을 표로 정리해 보고하고, 이 기준으로 정리한 뒤 4번의 조건을 채우면 머지합니다.
+   3라운드부터는 남은 지적을 표로 정리해 PR 댓글로 보고하고, 이 기준으로 정리한 뒤 4번의 조건을 채우면
+   머지합니다.
    코멘트 개수는 기준이 아닙니다.
 3. **환각·오탐**이면 코드를 고치지 않고, 그 지적이 성립하지 않는 이유를 최신 파일·라인, 코드 흐름 또는 검증
    결과와 함께 원래 스레드에 답합니다. 이미 구현돼 있거나, 없는 코드를 짚었거나, 의도된 동작을
@@ -156,39 +160,21 @@ Build a small, reliable, reusable MCP server that exposes Naver Search API and D
    - 강제 push는 같은 저장소의 브랜치에만 합니다. 새로 가져온 원격 B 커밋에서 작업을 시작하고 같은 SHA를
      지정합니다(`--force-with-lease=refs/heads/<B>:<SHA>`). 거부되면 덮어쓰지 말고 원격부터 다시 확인합니다.
      저장소 규칙이 강제 push를 제한하면 그 규칙을 따릅니다.
-6. 머지한 뒤에는 **원격·로컬 브랜치와 워크트리를 정리하고** 결과를 보고합니다.
+6. 머지한 뒤에는 **로컬 브랜치와 워크트리를 정리하고** 결과를 보고합니다.
    - 대상은 이번에 머지한 작업 브랜치와 이 작업을 위해 만든 워크트리입니다. 기본·장기 브랜치(develop, release 등),
      포크 브랜치, 열린 PR이 대상이나 소스로 쓰는 브랜치, 다른 세션이 쓰는 것은 남깁니다.
    - 워크트리는 머지한 head에 없는 커밋(detached HEAD 포함), 커밋하지 않은 변경, 남겨야 할 무시된 파일
      (`.env` 등, 무시된 폴더 안까지)이 없을 때만 `git worktree remove <경로>`로 지웁니다.
-   - 로컬 브랜치는 이 작업을 위해 만든 클론·워크트리에 있고, 다른 워크트리가 그 브랜치를 체크아웃하지
-     않았을 때만(`git worktree list`로 확인) 정리합니다.
-     머지한 head에 없는 커밋이 없는지 확인하고 `git branch -d`로 지웁니다.
-   - 원격 브랜치는 워크트리·로컬 브랜치를 정리한 **뒤에** 지웁니다. 원격 브랜치가 남아 있으면
-     `git remote get-url --push --all <원격>`이 한 줄이고, 그 주소와 가져오기 주소
-     (`git remote get-url <원격>`)가 모두 PR의 소스 저장소이며,
-     `git config --get-all remote.<원격>.fetch`가
-     `+refs/heads/*:refs/remotes/<원격>/*` 한 줄인지 확인합니다
-     (삭제 push 는 이 매핑의 로컬 참조도 지우므로, 다른 매핑이면 지우지 않습니다).
-     `git config --get-all remotes.<원격>`이 아무것도 출력하지 않고
-     (같은 이름의 원격 그룹이 있으면 push 가 그 그룹의 저장소로 갑니다),
-     `git symbolic-ref -q refs/remotes/<원격>/<브랜치>`가 종료 코드 1인지도 확인합니다
-     (심볼릭 참조면 삭제 push 가 그 참조가 가리키는 로컬 브랜치를 지웁니다).
-     `git rev-parse -q --verify refs/remotes/<원격>/<브랜치>`가 아무것도 출력하지 않거나
-     머지한 SHA를 출력하는지도 확인합니다(다른 커밋이면 그 추적 참조에만 남은 커밋을 삭제 push 가
-     함께 지웁니다).
-     확인한 원격 이름으로 그 브랜치만 조건부 삭제합니다.
-
-     ```bash
-     git push --no-follow-tags --recurse-submodules=no \
-       --force-with-lease=refs/heads/<브랜치>:<머지한 SHA> \
-       <원격> :refs/heads/<브랜치>
-     ```
-
-     `--recurse-submodules=no` 는 고정합니다. `push.recurseSubmodules=only` 설정이면 브랜치를
-     그대로 두고도 종료 코드 0 으로 끝나기 때문입니다.
-   - 위의 SHA 조건 말고는 강제 옵션(`--force`, `-D`)을 쓰지 않고, 저장소 전체를 훑는 정리
-     (`git worktree prune` 등)도 하지 않습니다. 확인하지 못했거나 거부되면 남기고 알립니다.
+   - 로컬 브랜치는 이 작업을 위해 만든 것만 정리합니다. 브랜치가 머지한 head의 조상일 때만
+     (`git merge-base --is-ancestor refs/heads/<브랜치> <머지한 head>` 종료 코드 0)
+     `git branch -d`로 지우고, 그 밖이면 남기고 알립니다. 어느 워크트리에서든
+     체크아웃·재배치·이분 탐색 중인 브랜치는 Git이 거부합니다.
+   - 원격 브랜치는 직접 지우지 않습니다. 저장소의 '머지 뒤 브랜치 자동 삭제'에 맡깁니다
+     (2026-11-29 결정). 켜져 있어도 남을 수 있으므로
+     `git ls-remote --exit-code <원격> refs/heads/<브랜치>`로 확인합니다. 종료 코드 2면 지워진
+     것이고, 0이면 남았다고, 그 밖이면 확인하지 못했다고 보고합니다.
+   - 강제 옵션(`--force`, `-D`)을 쓰지 않고, 저장소 전체를 훑는 정리(`git worktree prune` 등)도
+     하지 않습니다. 확인하지 못했거나 거부되면 남기고 알립니다.
    - 그 머지로 시작된 배포·릴리스 실행의 결과와, 후속으로 넘긴 제안·기존 문제와 2번에 따라
      후속으로 넘긴 지적을 PR 별로 보고합니다.
      배포가 실패했거나 결과를 확인하지 못했으면 그대로 알립니다.
